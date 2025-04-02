@@ -1,0 +1,101 @@
+CREATE A CLOUD-HOSTED SAAS APPLICATION WITH THESE COMPONENTS:
+
+=== BACKEND REQUIREMENTS (Python Flask) ===
+- Azure DevOps API integration for:
+  - Work item retrieval (Epics/User Stories/Tasks)
+  - Pull Request status monitoring
+  - Sprint timeline data extraction
+- Natural Language Processing system using:
+  - spaCy for dependency phrase detection ("Blocked by", "Requires", "Depends on")
+  - OpenAI GPT-3.5-turbo for contextual analysis of free-text fields
+- Machine Learning Model:
+  - Scikit-learn regression model trained on historical sprint data
+  - Predicts delay risk % based on:
+    - Team velocity history
+    - Dependency chain complexity
+    - Resource allocation
+- Real-Time Alert System:
+  - Slack/Teams webhook integration
+  - Threshold-based notifications (e.g., "Risk >75%")
+- Automated Dependency Graph Builder:
+  - NetworkX for dependency chain analysis
+  - Export to D3.js compatible JSON format
+
+=== FRONTEND REQUIREMENTS (React.js) ===
+- Interactive Visualization Dashboard:
+  - D3.js force-directed graph for dependency mapping
+  - Heatmap showing risk distribution across teams
+  - Gantt-style sprint timeline with risk overlays
+- Azure DevOps-like Interface:
+  - Work item board with AI-generated dependency tags
+  - Quick action buttons for dependency management
+- AI Input Console:
+  - Text area for manual dependency analysis
+  - Example placeholders:
+    "This feature requires API v2 from Sprint 5"
+    "Blocked until DevOps completes pipeline setup"
+- Configuration Panel:
+  - ADO connection setup wizard
+  - Alert threshold sliders (60-90% risk)
+  - Team velocity history upload
+
+=== REPLIT CONFIGURATION ===
+- Auto-Install These Packages:
+  Python:
+  flask>=2.0.1
+  flask-cors>=3.0.10
+  spacy>=3.7.4
+  scikit-learn>=1.4.0
+  python-dotenv>=1.0.0
+  openai>=1.12.0
+  networkx>=3.2.1
+
+  JavaScript:
+  d3@7.8.5
+  @microsoft/teams-js@2.7.0
+  axios@1.6.2
+  react-flow@11.7.0
+  
+- Environment Template:
+  ADO_ORG="your-organization-name"
+  ADO_PROJECT="your-project-name" 
+  ADO_TOKEN="base64-encoded-pat-token"
+  OPENAI_API_KEY="your-openai-key"
+  SLACK_WEBHOOK="https://hooks.slack.com/services/..."
+  TEAMS_WEBHOOK="https://outlook.office.com/webhook/..."
+
+- AI Assistant Configuration:
+  Enable code completion for:
+  - API error handling
+  - React component scaffolding
+  - ML model optimization
+  
+=== MOCK DATA & SAFETY FEATURES ===
+1. Fallback Mode:
+   - Uses sample_data.json when ADO connection fails
+   - Contains 50+ realistic work items with dependencies
+
+2. Error Prevention:
+   - Input validation for all API calls
+   - Rate limiting (max 5 req/sec)
+   - Session auto-save every 2 minutes
+
+3. Beginner Safety Nets:
+   - Code rollback via "/revert" command
+   - Visual warnings for misconfigured ENV vars
+   - One-click dependency installer
+
+=== SAMPLE TEST SCENARIO ===
+User Input: "We can't deploy until the database team finishes migration (Expected: Sprint 8)"  
+
+Expected Actions:
+1. NLP detects dependency on "database team" and "Sprint 8"
+2. Links to actual ADO work item DB-456
+3. ML model calculates:
+   - 68% delay risk (based on DB team's history)
+   - Potential 4-day cascade delay
+4. Frontend updates:
+   - Adds red edge to dependency graph
+   - Shows warning icon on Sprint 8 timeline
+5. Sends Teams message: 
+   "New high-risk dependency: DB-456 (68%) - Review needed"
