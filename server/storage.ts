@@ -271,7 +271,7 @@ export class MemStorage implements IStorage {
     const adoSetting: InsertAdoSettings = {
       userId: 1,
       organization: 'contoso',
-      project: 'ProjectX',
+      project: 'CloudOps',
       token: 'sample-token'
     };
     this.createAdoSettings(adoSetting);
@@ -285,84 +285,184 @@ export class MemStorage implements IStorage {
     };
     this.createAlertSettings(alertSetting);
     
-    // Create sample work items
+    // ELEVATOR PITCH SCENARIO: A Cross-Team E-Commerce Platform Launch
+    // Create sample work items representing a complete cross-team dependency flow
     const workItemsData: InsertWorkItem[] = [
+      // High-level Feature Epic
       {
-        adoId: 123,
-        title: 'API Feature Implementation',
+        adoId: 1001,
+        title: 'E-Commerce Platform Launch',
+        type: 'Epic',
+        state: 'In Progress',
+        assignedTo: 'Maria Lopez',
+        team: 'Product Management',
+        sprint: 'Sprint 12-15',
+        storyPoints: 34,
+        description: 'Launch the next-generation e-commerce platform with AI recommendations and real-time inventory'
+      },
+      
+      // Backend Services (Current Sprint)
+      {
+        adoId: 1023,
+        title: 'Product Catalog Microservice',
         type: 'User Story',
         state: 'In Progress',
         assignedTo: 'Alex Johnson',
-        team: 'API Team',
-        sprint: 'Sprint 9',
+        team: 'Backend Team',
+        sprint: 'Sprint 12',
         storyPoints: 8,
-        description: 'Implement the core API features for data processing'
+        description: 'Implement the product catalog microservice with caching and search capabilities'
       },
       {
-        adoId: 456,
-        title: 'Database Migration',
-        type: 'Task',
-        state: 'Not Started',
-        assignedTo: 'Database Team',
-        team: 'Database Team',
-        sprint: 'Sprint 8',
-        storyPoints: 13,
-        description: 'Database migration for customer data'
-      },
-      {
-        adoId: 789,
-        title: 'UI Component Development',
+        adoId: 1024,
+        title: 'Payment Processing Service',
         type: 'User Story',
         state: 'In Progress',
-        assignedTo: 'Sarah Chen',
-        team: 'UI Team',
-        sprint: 'Sprint 9',
-        storyPoints: 5,
-        description: 'Develop the UI components for the dashboard'
+        assignedTo: 'James Wilson',
+        team: 'Backend Team',
+        sprint: 'Sprint 12',
+        storyPoints: 13,
+        description: 'Implement the payment processing service with multiple gateway integrations'
       },
       {
-        adoId: 234,
-        title: 'Authentication Service',
+        adoId: 1025,
+        title: 'AI Recommendation Engine',
+        type: 'User Story',
+        state: 'Not Started',
+        assignedTo: 'Priya Sharma',
+        team: 'Data Science Team',
+        sprint: 'Sprint 12',
+        storyPoints: 13,
+        description: 'Build recommendation engine with ML models based on user browsing history and purchases'
+      },
+
+      // Database & Infrastructure (Current Sprint)
+      {
+        adoId: 1031,
+        title: 'Product Database Schema Migration',
         type: 'Task',
         state: 'In Progress',
-        assignedTo: 'Security Team',
-        team: 'Security Team',
-        sprint: 'Sprint 8-9',
-        storyPoints: 8,
-        description: 'Implement authentication service with Azure AD'
-      },
-      {
-        adoId: 567,
-        title: 'Testing Framework',
-        type: 'Task',
-        state: 'Not Started',
-        assignedTo: 'QA Team',
-        team: 'QA Team',
-        sprint: 'Sprint 9-10',
-        storyPoints: 5,
-        description: 'Set up the testing framework for the application'
-      },
-      {
-        adoId: 457,
-        title: 'Performance Optimization',
-        type: 'Task',
-        state: 'Not Started',
-        assignedTo: 'Database Team',
+        assignedTo: 'Sofia Chen',
         team: 'Database Team',
-        sprint: 'Sprint 9',
-        storyPoints: 8,
-        description: 'Performance optimization for reporting queries'
+        sprint: 'Sprint 12',
+        storyPoints: 5,
+        description: 'Migrate the product database schema to support new attributes and relationships'
       },
       {
-        adoId: 203,
-        title: 'Kubernetes Setup',
+        adoId: 1032,
+        title: 'High-Availability Database Setup',
+        type: 'Task',
+        state: 'At Risk',
+        assignedTo: 'Carlos Rodriguez',
+        team: 'Database Team',
+        sprint: 'Sprint 12',
+        storyPoints: 8,
+        description: 'Configure database clusters for high availability and implement sharding strategy'
+      },
+      {
+        adoId: 1033,
+        title: 'Kubernetes Deployment Configuration',
+        type: 'Task',
+        state: 'Not Started',
+        assignedTo: 'Ahmed Patel',
+        team: 'DevOps Team',
+        sprint: 'Sprint 12',
+        storyPoints: 5,
+        description: 'Set up Kubernetes configuration for microservices deployment and auto-scaling'
+      },
+
+      // Frontend & UX (Current and Next Sprint)
+      {
+        adoId: 1041,
+        title: 'Product Listing Component',
+        type: 'User Story',
+        state: 'In Progress',
+        assignedTo: 'Emma Taylor',
+        team: 'Frontend Team',
+        sprint: 'Sprint 12',
+        storyPoints: 5,
+        description: 'Develop the product listing component with filtering and sorting capabilities'
+      },
+      {
+        adoId: 1042,
+        title: 'Shopping Cart Experience',
+        type: 'User Story', 
+        state: 'Not Started',
+        assignedTo: 'David Kim',
+        team: 'Frontend Team',
+        sprint: 'Sprint 12-13',
+        storyPoints: 8,
+        description: 'Implement the shopping cart experience with real-time inventory checks'
+      },
+      {
+        adoId: 1043,
+        title: 'Checkout Flow Redesign',
+        type: 'User Story',
+        state: 'Not Started',
+        assignedTo: 'Sophia Martinez',
+        team: 'UX Team',
+        sprint: 'Sprint 13',
+        storyPoints: 13,
+        description: 'Redesign the checkout flow to reduce cart abandonment and improve conversion'
+      },
+
+      // Testing & Compliance (Next Sprint)
+      {
+        adoId: 1051,
+        title: 'End-to-End Testing Suite',
+        type: 'Task',
+        state: 'Not Started',
+        assignedTo: 'Li Wei',
+        team: 'QA Team',
+        sprint: 'Sprint 13',
+        storyPoints: 8,
+        description: 'Develop end-to-end testing suite for the complete purchase flow'
+      },
+      {
+        adoId: 1052,
+        title: 'Payment Security Compliance',
+        type: 'Task',
+        state: 'Not Started',
+        assignedTo: 'Olivia Brown',
+        team: 'Security Team',
+        sprint: 'Sprint 13',
+        storyPoints: 5,
+        description: 'Ensure payment processing meets PCI DSS compliance requirements'
+      },
+      {
+        adoId: 1053,
+        title: 'Performance Load Testing',
+        type: 'Task',
+        state: 'Not Started',
+        assignedTo: 'Michael Johnson',
+        team: 'Performance Team',
+        sprint: 'Sprint 13',
+        storyPoints: 8,
+        description: 'Conduct load testing to ensure system handles peak traffic during promotional events'
+      },
+
+      // Production Deployment (Future Sprint)
+      {
+        adoId: 1061,
+        title: 'Production Environment Setup',
         type: 'Task',
         state: 'Not Started',
         assignedTo: 'DevOps Team',
         team: 'DevOps Team',
-        sprint: 'Sprint 10',
-        storyPoints: 13,
-        description: 'Setup of production Kubernetes cluster'
+        sprint: 'Sprint 14',
+        storyPoints: 8,
+        description: 'Configure production environment with monitoring, logging, and alerting'
+      },
+      {
+        adoId: 1062,
+        title: 'Data Migration to Production',
+        type: 'Task',
+        state: 'Not Started',
+        assignedTo: 'Database Team',
+        team: 'Database Team',
+        sprint: 'Sprint 14',
+        storyPoints: 5,
+        description: 'Migrate existing product and customer data to new production environment'
       }
     ];
     
@@ -370,51 +470,128 @@ export class MemStorage implements IStorage {
       this.createWorkItem(item);
     }
     
-    // Create sample dependencies
+    // Create realistic cross-team dependencies
     const dependenciesData: InsertDependency[] = [
+      // Critical path for current sprint
       {
-        sourceId: 1, // API Feature
-        targetId: 2, // Database Migration
+        sourceId: 2, // Product Catalog Microservice
+        targetId: 5, // Product Database Schema Migration
         dependencyType: 'Blocked by',
         aiDetected: true,
         detectionSource: 'NLP',
-        riskScore: 68,
-        expectedDelay: 4
+        riskScore: 75,
+        expectedDelay: 3
       },
       {
-        sourceId: 1, // API Feature
-        targetId: 4, // Authentication Service
+        sourceId: 2, // Product Catalog Microservice
+        targetId: 6, // High-Availability Database Setup
         dependencyType: 'Depends on',
         aiDetected: true,
         detectionSource: 'NLP',
-        riskScore: 42,
+        riskScore: 85,
+        expectedDelay: 5
+      },
+      {
+        sourceId: 3, // Payment Processing Service
+        targetId: 6, // High-Availability Database Setup
+        dependencyType: 'Blocked by',
+        aiDetected: true,
+        detectionSource: 'NLP',
+        riskScore: 70,
+        expectedDelay: 4
+      },
+      {
+        sourceId: 8, // Product Listing Component
+        targetId: 2, // Product Catalog Microservice
+        dependencyType: 'Blocked by',
+        aiDetected: false,
+        detectionSource: 'Manual',
+        riskScore: 65,
         expectedDelay: 2
       },
       {
-        sourceId: 3, // UI Component
-        targetId: 1, // API Feature
+        sourceId: 9, // Shopping Cart Experience
+        targetId: 2, // Product Catalog Microservice
         dependencyType: 'Blocked by',
+        aiDetected: true,
+        detectionSource: 'NLP',
+        riskScore: 60,
+        expectedDelay: 3
+      },
+      {
+        sourceId: 9, // Shopping Cart Experience
+        targetId: 3, // Payment Processing Service
+        dependencyType: 'Blocked by',
+        aiDetected: true,
+        detectionSource: 'NLP',
+        riskScore: 55,
+        expectedDelay: 2
+      },
+      
+      // Dependencies for next sprint
+      {
+        sourceId: 10, // Checkout Flow Redesign
+        targetId: 9, // Shopping Cart Experience
+        dependencyType: 'Depends on',
+        aiDetected: false,
+        detectionSource: 'ADO',
+        riskScore: 45,
+        expectedDelay: 2
+      },
+      {
+        sourceId: 11, // End-to-End Testing Suite
+        targetId: 8, // Product Listing Component
+        dependencyType: 'Depends on',
+        aiDetected: false,
+        detectionSource: 'ADO',
+        riskScore: 35,
+        expectedDelay: 0
+      },
+      {
+        sourceId: 11, // End-to-End Testing Suite
+        targetId: 9, // Shopping Cart Experience
+        dependencyType: 'Depends on',
+        aiDetected: false,
+        detectionSource: 'ADO',
+        riskScore: 40,
+        expectedDelay: 1
+      },
+      {
+        sourceId: 12, // Payment Security Compliance
+        targetId: 3, // Payment Processing Service
+        dependencyType: 'Depends on',
+        aiDetected: true,
+        detectionSource: 'NLP',
+        riskScore: 80,
+        expectedDelay: 4
+      },
+      {
+        sourceId: 13, // Performance Load Testing
+        targetId: 7, // Kubernetes Deployment Configuration
+        dependencyType: 'Depends on',
         aiDetected: false,
         detectionSource: 'Manual',
         riskScore: 30,
         expectedDelay: 1
       },
+      
+      // Future sprint dependencies
       {
-        sourceId: 5, // Testing Framework
-        targetId: 1, // API Feature
+        sourceId: 14, // Production Environment Setup
+        targetId: 7, // Kubernetes Deployment Configuration
         dependencyType: 'Depends on',
         aiDetected: false,
         detectionSource: 'ADO',
-        riskScore: 25,
-        expectedDelay: 0
+        riskScore: 50,
+        expectedDelay: 2
       },
       {
-        sourceId: 2, // Database Migration
-        targetId: 6, // Performance Optimization
-        dependencyType: 'Blocks',
+        sourceId: 15, // Data Migration to Production
+        targetId: 5, // Product Database Schema Migration
+        dependencyType: 'Depends on',
         aiDetected: true,
         detectionSource: 'NLP',
-        riskScore: 75,
+        riskScore: 60,
         expectedDelay: 3
       }
     ];
@@ -423,59 +600,158 @@ export class MemStorage implements IStorage {
       this.createDependency(dep);
     }
     
-    // Create sample AI analyses
+    // Create sample AI analyses from team discussions and comments
     const aiAnalysesData: InsertAiAnalysis[] = [
       {
-        inputText: "We can't deploy until the database team finishes migration (Expected: Sprint 8)",
+        inputText: "The product catalog service deployment is blocked until the database team completes the schema migration and high-availability setup. Their sprint velocity has been slower than expected.",
         dependencyEntities: [
           {
-            entity: "database team",
-            relation: "dependency",
+            entity: "product catalog service",
+            relation: "dependent",
             confidence: 0.95
           },
           {
-            entity: "Sprint 8",
-            relation: "timeframe",
-            confidence: 0.9
+            entity: "database team",
+            relation: "blocker",
+            confidence: 0.92
+          },
+          {
+            entity: "schema migration",
+            relation: "task",
+            confidence: 0.90
+          },
+          {
+            entity: "high-availability setup",
+            relation: "task",
+            confidence: 0.88
           }
         ],
-        relatedWorkItemIds: [456], // DB-456
+        relatedWorkItemIds: [1023, 1031, 1032],
         riskAssessment: {
-          riskScore: 68,
+          riskScore: 78,
           expectedDelay: 4,
           factors: [
-            "Database team's historical velocity",
-            "Complexity of migration task",
-            "Dependencies on other tasks"
+            "Database team's historical velocity below target",
+            "Complex schema changes requiring data transformation",
+            "Multiple team dependencies on these tasks",
+            "Technical debt in existing database structure"
           ]
         }
       },
       {
-        inputText: "Authentication service requires Azure AD configuration before final testing",
+        inputText: "Frontend team is waiting on the product catalog API endpoints before they can complete the product listing components. This is becoming urgent for Sprint 12 completion.",
         dependencyEntities: [
           {
-            entity: "Authentication service",
-            relation: "dependency",
+            entity: "Frontend team",
+            relation: "dependent",
+            confidence: 0.94
+          },
+          {
+            entity: "product catalog API",
+            relation: "blocker",
+            confidence: 0.91
+          },
+          {
+            entity: "product listing components",
+            relation: "task",
+            confidence: 0.89
+          },
+          {
+            entity: "Sprint 12",
+            relation: "timeframe",
+            confidence: 0.92
+          }
+        ],
+        relatedWorkItemIds: [1023, 1041],
+        riskAssessment: {
+          riskScore: 65,
+          expectedDelay: 3,
+          factors: [
+            "API documentation delays",
+            "Shifting requirements for product attributes",
+            "Resource allocation across multiple features"
+          ]
+        }
+      },
+      {
+        inputText: "The high-availability database configuration is showing signs of performance issues during testing. This could impact both the catalog service and payment processing within Sprint 12.",
+        dependencyEntities: [
+          {
+            entity: "high-availability database",
+            relation: "blocker",
+            confidence: 0.96
+          },
+          {
+            entity: "performance issues",
+            relation: "problem",
+            confidence: 0.93
+          },
+          {
+            entity: "catalog service",
+            relation: "dependent",
+            confidence: 0.88
+          },
+          {
+            entity: "payment processing",
+            relation: "dependent",
+            confidence: 0.87
+          },
+          {
+            entity: "Sprint 12",
+            relation: "timeframe",
+            confidence: 0.90
+          }
+        ],
+        relatedWorkItemIds: [1032, 1023, 1024],
+        riskAssessment: {
+          riskScore: 85,
+          expectedDelay: 5,
+          factors: [
+            "Complex sharding strategy implementation",
+            "Unexpected performance regression",
+            "Multiple critical dependencies on this infrastructure",
+            "Limited expertise in the team for troubleshooting"
+          ]
+        }
+      },
+      {
+        inputText: "Security team raised concerns about the payment processing service compliance with PCI requirements. We need to address this before the checkout flow can be completed in Sprint 13.",
+        dependencyEntities: [
+          {
+            entity: "Security team",
+            relation: "stakeholder",
             confidence: 0.92
           },
           {
-            entity: "Azure AD configuration",
-            relation: "requirement",
-            confidence: 0.85
+            entity: "payment processing service",
+            relation: "component",
+            confidence: 0.94
           },
           {
-            entity: "final testing",
+            entity: "PCI requirements",
+            relation: "compliance",
+            confidence: 0.96
+          },
+          {
+            entity: "checkout flow",
+            relation: "dependent",
+            confidence: 0.89
+          },
+          {
+            entity: "Sprint 13",
             relation: "timeframe",
-            confidence: 0.78
+            confidence: 0.91
           }
         ],
-        relatedWorkItemIds: [234], // AUTH-234
+        relatedWorkItemIds: [1024, 1043, 1052],
         riskAssessment: {
-          riskScore: 42,
-          expectedDelay: 2,
+          riskScore: 80,
+          expectedDelay: 4,
           factors: [
-            "Security team's availability",
-            "Azure AD setup complexity"
+            "Compliance requirements complexity",
+            "Security team bandwidth limitations",
+            "Payment gateway integration challenges",
+            "Cross-team coordination needed"
           ]
         }
       }
