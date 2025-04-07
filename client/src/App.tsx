@@ -8,6 +8,7 @@ import Dependencies from "@/pages/Dependencies";
 import WorkItems from "@/pages/WorkItems";
 import SprintTimeline from "@/pages/SprintTimeline";
 import AiAnalysis from "@/pages/AiAnalysis";
+import Analytics from "@/pages/Analytics";
 import Alerts from "@/pages/Alerts";
 import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/work-items" component={WorkItems} />
         <Route path="/sprint-timeline" component={SprintTimeline} />
         <Route path="/ai-analysis" component={AiAnalysis} />
+        <Route path="/analytics" component={Analytics} />
         <Route path="/alerts" component={Alerts} />
         <Route path="/physics-settings" component={PhysicsSettings} />
         <Route path="/settings" component={Settings} />
