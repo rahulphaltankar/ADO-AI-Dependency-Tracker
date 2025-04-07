@@ -1,8 +1,26 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { storage } from "./storage";
 import { z } from "zod";
 import { workItems, dependencies, insertWorkItemSchema, insertDependencySchema, aiAnalysis, insertAiAnalysisSchema } from "@shared/schema";
+
+// Define custom WebSocket type with subscriptions
+interface ExtendedWebSocket extends WebSocket {
+  subscriptions: string[];
+}
+
+// Ensure TypeScript type safety
+type ExtendedWebSocketServer = WebSocketServer & {
+  clients: Set<ExtendedWebSocket>;
+};
+
+// Define WebSocket notifier interface
+interface WSNotifier {
+  broadcastRiskUpdate: (workItemId: number, newRiskScore: number, oldRiskScore: number) => void;
+  broadcastCriticalPathUpdate: (criticalPath: number[], totalWeight: number) => void;
+  broadcastCascadeImpactUpdate: (workItemId: number, affectedItems: number[], totalDelay: number) => void;
+}
 import { createAdoClient } from "./lib/azureDevOps";
 import { analyzeDependencyText } from "./lib/openai";
 import { dependencyAnalyzer } from "./lib/dependencyAnalysis";
@@ -712,5 +730,105 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+  
+  // Initialize WebSocket server
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' }) as ExtendedWebSocketServer;
+  
+  // WebSocket connection handling
+  wss.on('connection', (socket: WebSocket) => {
+    // Initialize as ExtendedWebSocket with empty subscriptions array
+    const ws = socket as ExtendedWebSocket;
+    ws.subscriptions = [];
+    
+    console.log('WebSocket client connected');
+    
+    // Send initial connection success message
+    ws.send(JSON.stringify({
+      type: 'connection',
+      status: 'connected',
+      timestamp: new Date().toISOString()
+    }));
+    
+    // Handle messages from clients
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received message from client:', data);
+        
+        // Handle different message types
+        if (data.type === 'subscribe') {
+          // Store subscription information
+          ws.subscriptions.push(data.channel);
+          
+          // Confirm subscription
+          ws.send(JSON.stringify({
+            type: 'subscription',
+            status: 'subscribed',
+            channel: data.channel,
+            timestamp: new Date().toISOString()
+          }));
+        }
+      } catch (error) {
+        console.error('Error handling WebSocket message:', error);
+      }
+    });
+    
+    // Handle client disconnection
+    ws.on('close', () => {
+      console.log('WebSocket client disconnected');
+    });
+  });
+  
+  // Helper function to broadcast messages to subscribed clients
+  const broadcastToSubscribers = (channel: string, data: any) => {
+    wss.clients.forEach((socket) => {
+      // Cast to ExtendedWebSocket
+      const client = socket as ExtendedWebSocket;
+      
+      if (client.readyState === WebSocket.OPEN && 
+          client.subscriptions && 
+          client.subscriptions.includes(channel)) {
+        client.send(JSON.stringify({
+          type: 'update',
+          channel,
+          data,
+          timestamp: new Date().toISOString()
+        }));
+      }
+    });
+  };
+  
+  // Expose broadcast function globally for notification service
+  const wsNotifier: WSNotifier = {
+    broadcastRiskUpdate: (workItemId: number, newRiskScore: number, oldRiskScore: number) => {
+      broadcastToSubscribers('risk-updates', {
+        workItemId,
+        newRiskScore,
+        oldRiskScore,
+        change: newRiskScore - oldRiskScore
+      });
+    },
+    
+    broadcastCriticalPathUpdate: (criticalPath: number[], totalWeight: number) => {
+      broadcastToSubscribers('critical-path', {
+        criticalPath,
+        totalWeight,
+        updatedAt: new Date().toISOString()
+      });
+    },
+    
+    broadcastCascadeImpactUpdate: (workItemId: number, affectedItems: number[], totalDelay: number) => {
+      broadcastToSubscribers('cascade-impact', {
+        sourceWorkItemId: workItemId,
+        affectedItems,
+        totalDelay,
+        updatedAt: new Date().toISOString()
+      });
+    }
+  };
+  
+  // Make wsNotifier available globally to other modules
+  (global as any).wsNotifier = wsNotifier;
+  
   return httpServer;
 }
