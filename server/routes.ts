@@ -8,6 +8,7 @@ import { analyzeDependencyText } from "./lib/openai";
 import { dependencyAnalyzer } from "./lib/dependencyAnalysis";
 import { notificationService } from "./lib/notification";
 import { riskPredictionService } from "./lib/riskPrediction";
+import { pythonAPI } from "./lib/pythonAPI";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ------------------ API ROUTES ------------------
@@ -341,6 +342,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const allDeps = await storage.getDependencies();
       const highRiskDeps = allDeps.filter(dep => (dep.riskScore || 0) >= 65);
       
+      // Check if PINN should be used
+      const usePINN = req.query.usePINN === 'true';
+      
       // Get associated work items
       const workItemIds = new Set<number>();
       highRiskDeps.forEach(dep => {
@@ -358,17 +362,281 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const source = workItems.find(item => item?.id === dep.sourceId);
           const target = workItems.find(item => item?.id === dep.targetId);
           
+          if (!source || !target) {
+            return null;
+          }
+          
+          let expectedDelay = 0;
+          let modelUsed = 'traditional';
+          let productivityImpact = undefined;
+          
+          if (usePINN) {
+            try {
+              // Get team velocity data (would be dynamic in real app)
+              const teamVelocities = [
+                {
+                  team: source.team || 'Default Team',
+                  sprints: [
+                    {
+                      sprintName: 'Sprint 12',
+                      completed: 18,
+                      planned: 21
+                    }
+                  ]
+                }
+              ];
+              
+              // Use PINN-enhanced risk prediction
+              const prediction = await riskPredictionService.predictDependencyRisk(
+                dep,
+                source,
+                target,
+                teamVelocities
+              );
+              
+              expectedDelay = prediction.expectedDelay;
+              modelUsed = prediction.modelUsed;
+              productivityImpact = prediction.productivityImpact;
+            } catch (err) {
+              // Fallback to traditional method
+              expectedDelay = riskPredictionService.estimateDelay(dep.riskScore || 50, target);
+            }
+          } else {
+            // Use traditional method
+            expectedDelay = riskPredictionService.estimateDelay(dep.riskScore || 50, target);
+          }
+          
           return {
             dependency: dep,
-            source: source || null,
-            target: target || null
+            source,
+            target,
+            expectedDelay,
+            modelUsed,
+            productivityImpact
           };
         })
       );
       
-      res.json(result);
+      // Filter out null results
+      const filteredResult = result.filter(item => item !== null);
+      
+      res.json(filteredResult);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch high risk dependencies', error: error.message });
+    }
+  });
+  
+  // PINN-related endpoints
+  
+  // Get PINN configuration
+  app.get('/api/pinn-config', async (_req, res) => {
+    try {
+      const config = riskPredictionService.getConfiguration();
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch PINN configuration', error: error.message });
+    }
+  });
+  
+  // Update PINN configuration
+  app.post('/api/pinn-config', async (req, res) => {
+    try {
+      const { usePINN, lightweightMode } = req.body;
+      
+      riskPredictionService.configure({
+        usePINN,
+        lightweightMode
+      });
+      
+      const config = riskPredictionService.getConfiguration();
+      res.json(config);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to update PINN configuration', error: error.message });
+    }
+  });
+  
+  // Train PINN model
+  app.post('/api/train-pinn-model', async (_req, res) => {
+    try {
+      const workItems = await storage.getWorkItems();
+      const dependencies = await storage.getDependencies();
+      
+      // Get mock team velocity data
+      const teamVelocities = [
+        {
+          team: 'API Team',
+          sprints: [
+            { sprintName: 'Sprint 12', completed: 21, planned: 21 },
+            { sprintName: 'Sprint 11', completed: 24, planned: 21 },
+            { sprintName: 'Sprint 10', completed: 18, planned: 21 }
+          ]
+        },
+        {
+          team: 'UI Team',
+          sprints: [
+            { sprintName: 'Sprint 12', completed: 16, planned: 21 },
+            { sprintName: 'Sprint 11', completed: 18, planned: 21 },
+            { sprintName: 'Sprint 10', completed: 13, planned: 13 }
+          ]
+        },
+        {
+          team: 'Database Team',
+          sprints: [
+            { sprintName: 'Sprint 12', completed: 16, planned: 21 },
+            { sprintName: 'Sprint 11', completed: 13, planned: 21 },
+            { sprintName: 'Sprint 10', completed: 8, planned: 13 }
+          ]
+        }
+      ];
+      
+      // Train the PINN model
+      const result = await riskPredictionService.trainPINNModel(
+        workItems, 
+        dependencies, 
+        teamVelocities
+      );
+      
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to train PINN model: ' + (error as Error).message 
+      });
+    }
+  });
+  
+  // Create lightweight PINN model
+  app.post('/api/create-lightweight-model', async (_req, res) => {
+    try {
+      const result = await riskPredictionService.createLightweightModel();
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ 
+        success: false, 
+        message: 'Failed to create lightweight model: ' + (error as Error).message 
+      });
+    }
+  });
+  
+  // Find critical path with PINN enhancement
+  app.get('/api/critical-path', async (req, res) => {
+    try {
+      const workItems = await storage.getWorkItems();
+      const dependencies = await storage.getDependencies();
+      
+      // Check if PINN should be used
+      const usePINN = req.query.usePINN === 'true';
+      
+      const graph = dependencyAnalyzer.buildDependencyGraph(workItems, dependencies);
+      
+      if (usePINN && pythonAPI.isPINNAvailable()) {
+        // Use the python-based critical path with physics enhancements
+        const edges = graph.links.map(link => ({
+          source: link.source,
+          target: link.target,
+          weight: link.expectedDelay || 1,
+          riskScore: link.riskScore
+        }));
+        
+        try {
+          const criticalPath = await pythonAPI.findCriticalPath(
+            graph.nodes.map(n => n.id),
+            edges,
+            { usePINN: true }
+          );
+          
+          return res.json({
+            criticalPath: criticalPath.path,
+            totalWeight: criticalPath.totalWeight,
+            usedPINN: criticalPath.usedPINN
+          });
+        } catch (err) {
+          // Fall back to traditional method
+          console.error('Error using PINN for critical path, falling back to traditional method:', err);
+          const traditionalPath = await dependencyAnalyzer.identifyCriticalPath(graph);
+          return res.json({ 
+            criticalPath: traditionalPath,
+            usedPINN: false
+          });
+        }
+      } else {
+        // Use the existing critical path method
+        const criticalPath = await dependencyAnalyzer.identifyCriticalPath(graph);
+        return res.json({ 
+          criticalPath,
+          usedPINN: false
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to find critical path', error: error.message });
+    }
+  });
+  
+  // Calculate cascade impact with PINN enhancement
+  app.get('/api/cascade-impact/:id', async (req, res) => {
+    try {
+      const workItemId = parseInt(req.params.id);
+      const workItems = await storage.getWorkItems();
+      const dependencies = await storage.getDependencies();
+      
+      // Check if PINN should be used
+      const usePINN = req.query.usePINN === 'true';
+      
+      const graph = dependencyAnalyzer.buildDependencyGraph(workItems, dependencies);
+      
+      if (usePINN && pythonAPI.isPINNAvailable()) {
+        // Use the python-based cascade impact with physics enhancements
+        const edges = graph.links.map(link => ({
+          source: link.source,
+          target: link.target,
+          weight: link.expectedDelay || 1,
+          riskScore: link.riskScore
+        }));
+        
+        try {
+          const impact = await pythonAPI.calculateCascadeImpact(
+            workItemId,
+            graph.nodes.map(n => n.id),
+            edges,
+            { usePINN: true }
+          );
+          
+          return res.json(impact);
+        } catch (err) {
+          // Fall back to traditional method
+          console.error('Error using PINN for cascade impact, falling back to traditional method:', err);
+          const impact = await dependencyAnalyzer.calculateCascadeImpact(workItemId, graph);
+          return res.json({
+            ...impact,
+            usedPINN: false
+          });
+        }
+      } else {
+        // Use the existing cascade impact method
+        const impact = await dependencyAnalyzer.calculateCascadeImpact(workItemId, graph);
+        return res.json({
+          ...impact,
+          usedPINN: false
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to calculate cascade impact', error: error.message });
+    }
+  });
+  
+  // Anonymize data for GDPR compliance
+  app.post('/api/anonymize-data', async (req, res) => {
+    try {
+      const { data, fields } = req.body;
+      
+      if (!data) {
+        return res.status(400).json({ message: 'Data is required' });
+      }
+      
+      const result = await pythonAPI.anonymizeData(data, fields);
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to anonymize data', error: error.message });
     }
   });
 

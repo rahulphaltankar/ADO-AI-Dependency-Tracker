@@ -70,6 +70,14 @@ const SideNavigation = ({ user }: SideNavigationProps) => {
             </a>
           </Link>
           
+          <Link href="/physics-settings">
+            <a className={`flex items-center ${isActive('/physics-settings') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
+              <span className="material-icons text-sm mr-3">science</span>
+              <span>Physics Settings</span>
+              <span className="ml-auto bg-primary text-white text-xs px-2 py-0.5 rounded-full">New</span>
+            </a>
+          </Link>
+          
           <Link href="/alerts">
             <a className={`flex items-center ${isActive('/alerts') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
               <span className="material-icons text-sm mr-3">notifications</span>

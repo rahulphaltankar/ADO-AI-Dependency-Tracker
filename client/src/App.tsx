@@ -11,6 +11,7 @@ import AiAnalysis from "@/pages/AiAnalysis";
 import Alerts from "@/pages/Alerts";
 import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
+import PhysicsSettings from "@/pages/PhysicsSettings";
 import AppLayout from "@/components/layout/AppLayout";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
         <Route path="/sprint-timeline" component={SprintTimeline} />
         <Route path="/ai-analysis" component={AiAnalysis} />
         <Route path="/alerts" component={Alerts} />
+        <Route path="/physics-settings" component={PhysicsSettings} />
         <Route path="/settings" component={Settings} />
         <Route path="/help" component={Help} />
         <Route component={NotFound} />
