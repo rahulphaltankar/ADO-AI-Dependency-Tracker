@@ -51,9 +51,27 @@ const PhysicsSettings = () => {
   
   // Train PINN model
   const trainModel = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       setIsTraining(true);
-      return apiRequest('/api/train-pinn-model', 'POST');
+      try {
+        // Use a direct fetch here since we're having issues with the apiRequest function
+        const response = await fetch('/api/train-pinn-model', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // Send empty body since no parameters are needed
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (err) {
+        console.error("Error training model:", err);
+        throw err;
+      }
     },
     onSuccess: (data) => {
       setIsTraining(false);
@@ -76,8 +94,26 @@ const PhysicsSettings = () => {
   
   // Create lightweight model
   const createLightweightModel = useMutation({
-    mutationFn: () => {
-      return apiRequest('/api/create-lightweight-model', 'POST');
+    mutationFn: async () => {
+      try {
+        // Use a direct fetch here since we're having issues with the apiRequest function
+        const response = await fetch('/api/create-lightweight-model', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({}) // Send empty body since no parameters are needed
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (err) {
+        console.error("Error creating lightweight model:", err);
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/pinn-config'] });
