@@ -13,6 +13,17 @@ const SideNavigation = ({ user }: SideNavigationProps) => {
 
   const isActive = (path: string) => location === path;
 
+  // Helper function to create navigation items
+  const NavItem = ({ to, icon, label, badge }: { to: string, icon: string, label: string, badge?: React.ReactNode }) => (
+    <Link href={to}>
+      <div className={`flex items-center cursor-pointer ${isActive(to) ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
+        <span className="material-icons text-sm mr-3">{icon}</span>
+        <span>{label}</span>
+        {badge}
+      </div>
+    </Link>
+  );
+
   return (
     <div className="w-64 h-full bg-white shadow-md flex flex-col z-10">
       <div className="p-4 border-b border-neutral-200 flex items-center">
@@ -26,81 +37,34 @@ const SideNavigation = ({ user }: SideNavigationProps) => {
         <div className="p-2">
           <div className="text-neutral-500 text-xs font-medium uppercase px-3 py-2">Main</div>
           
-          <Link href="/">
-            <a className={`flex items-center ${isActive('/') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">dashboard</span>
-              <span>Dashboard</span>
-            </a>
-          </Link>
-          
-          <Link href="/dependencies">
-            <a className={`flex items-center ${isActive('/dependencies') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">account_tree</span>
-              <span>Dependencies</span>
-            </a>
-          </Link>
-          
-          <Link href="/work-items">
-            <a className={`flex items-center ${isActive('/work-items') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">view_kanban</span>
-              <span>Work Items</span>
-            </a>
-          </Link>
-          
-          <Link href="/sprint-timeline">
-            <a className={`flex items-center ${isActive('/sprint-timeline') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">timeline</span>
-              <span>Sprint Timeline</span>
-            </a>
-          </Link>
-          
-          <Link href="/analytics">
-            <a className={`flex items-center ${isActive('/analytics') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">analytics</span>
-              <span>Analytics</span>
-            </a>
-          </Link>
+          <NavItem to="/" icon="dashboard" label="Dashboard" />
+          <NavItem to="/dependencies" icon="account_tree" label="Dependencies" />
+          <NavItem to="/work-items" icon="view_kanban" label="Work Items" />
+          <NavItem to="/sprint-timeline" icon="timeline" label="Sprint Timeline" />
+          <NavItem to="/analytics" icon="analytics" label="Analytics" />
           
           <div className="text-neutral-500 text-xs font-medium uppercase px-3 py-2 mt-4">AI Tools</div>
           
-          <Link href="/ai-analysis">
-            <a className={`flex items-center ${isActive('/ai-analysis') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">psychology</span>
-              <span>AI Analysis</span>
-            </a>
-          </Link>
+          <NavItem to="/ai-analysis" icon="psychology" label="AI Analysis" />
           
-          <Link href="/physics-settings">
-            <a className={`flex items-center ${isActive('/physics-settings') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">science</span>
-              <span>Physics Settings</span>
-              <span className="ml-auto bg-primary text-white text-xs px-2 py-0.5 rounded-full">New</span>
-            </a>
-          </Link>
+          <NavItem 
+            to="/physics-settings" 
+            icon="science" 
+            label="Physics Settings" 
+            badge={<span className="ml-auto bg-primary text-white text-xs px-2 py-0.5 rounded-full">New</span>}
+          />
           
-          <Link href="/alerts">
-            <a className={`flex items-center ${isActive('/alerts') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">notifications</span>
-              <span>Alerts</span>
-              <span className="ml-auto bg-error text-white text-xs px-2 py-0.5 rounded-full">3</span>
-            </a>
-          </Link>
+          <NavItem 
+            to="/alerts" 
+            icon="notifications" 
+            label="Alerts" 
+            badge={<span className="ml-auto bg-error text-white text-xs px-2 py-0.5 rounded-full">3</span>}
+          />
           
           <div className="text-neutral-500 text-xs font-medium uppercase px-3 py-2 mt-4">Configuration</div>
           
-          <Link href="/settings">
-            <a className={`flex items-center ${isActive('/settings') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">settings</span>
-              <span>Settings</span>
-            </a>
-          </Link>
-          
-          <Link href="/help">
-            <a className={`flex items-center ${isActive('/help') ? 'text-primary bg-blue-50' : 'text-neutral-700 hover:bg-neutral-100'} rounded-md px-3 py-2 mb-1`}>
-              <span className="material-icons text-sm mr-3">help_outline</span>
-              <span>Help & Support</span>
-            </a>
-          </Link>
+          <NavItem to="/settings" icon="settings" label="Settings" />
+          <NavItem to="/help" icon="help_outline" label="Help & Support" />
         </div>
       </div>
       
@@ -113,11 +77,12 @@ const SideNavigation = ({ user }: SideNavigationProps) => {
             <div className="text-sm font-medium">{user.name}</div>
             <div className="text-xs text-neutral-500">{user.email}</div>
           </div>
-          <Link href="/settings">
-            <a className="ml-auto text-neutral-400 hover:text-neutral-600">
-              <span className="material-icons text-lg">settings</span>
-            </a>
-          </Link>
+          <div 
+            onClick={() => window.location.href = '/settings'}
+            className="ml-auto text-neutral-400 hover:text-neutral-600 cursor-pointer"
+          >
+            <span className="material-icons text-lg">settings</span>
+          </div>
         </div>
       </div>
     </div>
