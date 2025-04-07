@@ -45,9 +45,9 @@ const Analytics = () => {
 
   // Process dependency risk data
   const getDependencyRiskData = () => {
-    if (!dependencies || !dependencies.edges) return [];
+    if (!dependencies || !dependencies.links) return [];
     
-    const riskDistribution = dependencies.edges.reduce((acc: Record<string, number>, edge: any) => {
+    const riskDistribution = dependencies.links.reduce((acc: Record<string, number>, edge: any) => {
       let riskLevel = 'Low';
       if (edge.riskScore >= 70) riskLevel = 'High';
       else if (edge.riskScore >= 40) riskLevel = 'Medium';
@@ -71,7 +71,8 @@ const Analytics = () => {
       
       if (sprint.teams && Array.isArray(sprint.teams)) {
         sprint.teams.forEach((team: any) => {
-          result[team.name] = team.velocity;
+          // Use completed story points as velocity
+          result[team.name] = team.completed;
         });
       }
       
@@ -84,7 +85,7 @@ const Analytics = () => {
     if (!workItems || !Array.isArray(workItems)) return [];
     
     const statusDistribution = workItems.reduce((acc: Record<string, number>, item: any) => {
-      const status = item.status || 'Unknown';
+      const status = item.state || 'Unknown';
       acc[status] = (acc[status] || 0) + 1;
       return acc;
     }, {});
@@ -232,12 +233,12 @@ const Analytics = () => {
               <div className="h-96">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={dependencies?.edges && Array.isArray(dependencies.edges) 
-                      ? dependencies.edges.map((edge: any) => ({
-                          id: `${edge.sourceId}-${edge.targetId}`,
-                          sourceId: edge.sourceId,
-                          targetId: edge.targetId,
-                          riskScore: edge.riskScore || 0
+                    data={dependencies?.links && Array.isArray(dependencies.links) 
+                      ? dependencies.links.map((link: any) => ({
+                          id: `${link.source}-${link.target}`,
+                          sourceId: link.source,
+                          targetId: link.target,
+                          riskScore: link.riskScore || 0
                         }))
                       : []
                     }
