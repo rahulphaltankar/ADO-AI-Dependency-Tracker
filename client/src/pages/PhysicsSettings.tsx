@@ -29,8 +29,26 @@ const PhysicsSettings = () => {
   
   // Update PINN configuration
   const updateConfig = useMutation({
-    mutationFn: (newConfig: { usePINN: boolean, lightweightMode: boolean }) => {
-      return apiRequest('/api/pinn-config', 'POST', newConfig);
+    mutationFn: async (newConfig: { usePINN: boolean, lightweightMode: boolean }) => {
+      try {
+        // Use a direct fetch here since we're having issues with the apiRequest function
+        const response = await fetch('/api/pinn-config', { 
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(newConfig)
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Server responded with status: ${response.status}`);
+        }
+        
+        return await response.json();
+      } catch (err) {
+        console.error("Error updating PINN configuration:", err);
+        throw err;
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/pinn-config'] });
