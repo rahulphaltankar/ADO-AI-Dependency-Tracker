@@ -484,7 +484,7 @@ Risk Score: ${d.riskScore}%`;
               <Button variant="outline" size="icon" onClick={handleExportGraph}>
                 <Download className="h-4 w-4" />
               </Button>
-              <Button variant="primary" size="sm" onClick={handleRefresh}>
+              <Button variant="default" size="sm" onClick={handleRefresh} className="bg-primary hover:bg-primary/90">
                 <RefreshCw className="h-4 w-4 mr-1" />
                 Refresh
               </Button>
@@ -504,7 +504,7 @@ Risk Score: ${d.riskScore}%`;
           ) : (
             <>
               {/* Add the animation keyframes for the dashed lines */}
-              <style jsx>{`
+              <style>{`
                 @keyframes dash {
                   to {
                     stroke-dashoffset: 20;
