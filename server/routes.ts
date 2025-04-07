@@ -9,6 +9,7 @@ import { dependencyAnalyzer } from "./lib/dependencyAnalysis";
 import { notificationService } from "./lib/notification";
 import { riskPredictionService } from "./lib/riskPrediction";
 import { pythonAPI } from "./lib/pythonAPI";
+import { pinnSimulator } from "./lib/pinnSimulator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // ------------------ API ROUTES ------------------
@@ -431,7 +432,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get PINN configuration
   app.get('/api/pinn-config', async (_req, res) => {
     try {
-      const config = riskPredictionService.getConfiguration();
+      // Use the simulator to get configuration
+      const config = pinnSimulator.getConfiguration();
       res.json(config);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch PINN configuration', error: error.message });
@@ -443,12 +445,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { usePINN, lightweightMode } = req.body;
       
+      // Configure both the risk prediction service and the simulator
       riskPredictionService.configure({
         usePINN,
         lightweightMode
       });
       
-      const config = riskPredictionService.getConfiguration();
+      // Update simulator configuration
+      pinnSimulator.configure({
+        usePINN,
+        lightweightMode
+      });
+      
+      const config = pinnSimulator.getConfiguration();
       res.json(config);
     } catch (error) {
       res.status(500).json({ message: 'Failed to update PINN configuration', error: error.message });
@@ -458,43 +467,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Train PINN model
   app.post('/api/train-pinn-model', async (_req, res) => {
     try {
-      const workItems = await storage.getWorkItems();
-      const dependencies = await storage.getDependencies();
+      // Use our simulator to train the model
+      const result = await pinnSimulator.trainModel();
       
-      // Get mock team velocity data
-      const teamVelocities = [
-        {
-          team: 'API Team',
-          sprints: [
-            { sprintName: 'Sprint 12', completed: 21, planned: 21 },
-            { sprintName: 'Sprint 11', completed: 24, planned: 21 },
-            { sprintName: 'Sprint 10', completed: 18, planned: 21 }
-          ]
-        },
-        {
-          team: 'UI Team',
-          sprints: [
-            { sprintName: 'Sprint 12', completed: 16, planned: 21 },
-            { sprintName: 'Sprint 11', completed: 18, planned: 21 },
-            { sprintName: 'Sprint 10', completed: 13, planned: 13 }
-          ]
-        },
-        {
-          team: 'Database Team',
-          sprints: [
-            { sprintName: 'Sprint 12', completed: 16, planned: 21 },
-            { sprintName: 'Sprint 11', completed: 13, planned: 21 },
-            { sprintName: 'Sprint 10', completed: 8, planned: 13 }
-          ]
-        }
-      ];
-      
-      // Train the PINN model
-      const result = await riskPredictionService.trainPINNModel(
-        workItems, 
-        dependencies, 
-        teamVelocities
-      );
+      // Update the risk prediction service configuration
+      riskPredictionService.configure({
+        usePINN: true,
+        lightweightMode: false
+      });
       
       res.json(result);
     } catch (error) {
@@ -508,7 +488,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create lightweight PINN model
   app.post('/api/create-lightweight-model', async (_req, res) => {
     try {
-      const result = await riskPredictionService.createLightweightModel();
+      // Use our simulator to create a lightweight model
+      const result = await pinnSimulator.createLightweightModel();
+      
+      // Update the risk prediction service configuration
+      riskPredictionService.configure({
+        usePINN: true,
+        lightweightMode: true
+      });
+      
       res.json(result);
     } catch (error) {
       res.status(500).json({ 
@@ -525,30 +513,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dependencies = await storage.getDependencies();
       
       // Check if PINN should be used
-      const usePINN = req.query.usePINN === 'true';
+      const usePINN = req.query.usePINN === 'true' || pinnSimulator.getConfiguration().pinnEnabled;
       
       const graph = dependencyAnalyzer.buildDependencyGraph(workItems, dependencies);
+      const edges = graph.links.map(link => ({
+        source: link.source,
+        target: link.target,
+        weight: link.expectedDelay || 1,
+        riskScore: link.riskScore
+      }));
       
-      if (usePINN && pythonAPI.isPINNAvailable()) {
-        // Use the python-based critical path with physics enhancements
-        const edges = graph.links.map(link => ({
-          source: link.source,
-          target: link.target,
-          weight: link.expectedDelay || 1,
-          riskScore: link.riskScore
-        }));
-        
+      if (usePINN && pinnSimulator.getConfiguration().pinnAvailable) {
+        // Use the simulator's critical path with physics enhancements
         try {
-          const criticalPath = await pythonAPI.findCriticalPath(
+          const criticalPathResult = pinnSimulator.simulateCriticalPath(
             graph.nodes.map(n => n.id),
-            edges,
-            { usePINN: true }
+            edges
           );
           
           return res.json({
-            criticalPath: criticalPath.path,
-            totalWeight: criticalPath.totalWeight,
-            usedPINN: criticalPath.usedPINN
+            criticalPath: criticalPathResult.path,
+            totalWeight: criticalPathResult.totalWeight,
+            usedPINN: true,
+            physicsEnhancedFactors: criticalPathResult.physicsEnhancedFactors
           });
         } catch (err) {
           // Fall back to traditional method
@@ -580,28 +567,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const dependencies = await storage.getDependencies();
       
       // Check if PINN should be used
-      const usePINN = req.query.usePINN === 'true';
+      const usePINN = req.query.usePINN === 'true' || pinnSimulator.getConfiguration().pinnEnabled;
       
       const graph = dependencyAnalyzer.buildDependencyGraph(workItems, dependencies);
+      const edges = graph.links.map(link => ({
+        source: link.source,
+        target: link.target,
+        weight: link.expectedDelay || 1,
+        riskScore: link.riskScore
+      }));
       
-      if (usePINN && pythonAPI.isPINNAvailable()) {
-        // Use the python-based cascade impact with physics enhancements
-        const edges = graph.links.map(link => ({
-          source: link.source,
-          target: link.target,
-          weight: link.expectedDelay || 1,
-          riskScore: link.riskScore
-        }));
-        
+      if (usePINN && pinnSimulator.getConfiguration().pinnAvailable) {
+        // Use the simulator's cascade impact with physics enhancements
         try {
-          const impact = await pythonAPI.calculateCascadeImpact(
+          const impactResult = pinnSimulator.simulateCascadeImpact(
             workItemId,
             graph.nodes.map(n => n.id),
-            edges,
-            { usePINN: true }
+            edges
           );
           
-          return res.json(impact);
+          return res.json({
+            affectedItems: impactResult.affectedItems,
+            totalDelay: impactResult.totalDelay,
+            physicsEnhancedDelay: impactResult.physicsEnhancedDelay,
+            delayReduction: impactResult.totalDelay - impactResult.physicsEnhancedDelay,
+            delayReductionPercentage: Math.round(
+              ((impactResult.totalDelay - impactResult.physicsEnhancedDelay) / impactResult.totalDelay) * 100
+            ),
+            delayFactors: impactResult.delayFactors,
+            mitigationSuggestions: impactResult.mitigationSuggestions,
+            usedPINN: true
+          });
         } catch (err) {
           // Fall back to traditional method
           console.error('Error using PINN for cascade impact, falling back to traditional method:', err);
@@ -637,6 +633,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (error) {
       res.status(500).json({ message: 'Failed to anonymize data', error: error.message });
+    }
+  });
+  
+  // Predict risk and expected delay for a dependency
+  app.post('/api/predict-risk', async (req, res) => {
+    try {
+      const { sourceId, targetId, dependencyType } = req.body;
+      
+      // Get the work items
+      const sourceItem = await storage.getWorkItem(sourceId);
+      const targetItem = await storage.getWorkItem(targetId);
+      
+      if (!sourceItem || !targetItem) {
+        return res.status(404).json({ message: 'Work items not found' });
+      }
+      
+      // Check if PINN is enabled
+      const usePINN = pinnSimulator.getConfiguration().pinnEnabled;
+      
+      // Create a dependency object for prediction
+      const dependency = {
+        id: 0, // Temporary ID for the simulator
+        sourceId,
+        targetId,
+        dependencyType,
+        aiDetected: true,
+        detectionSource: 'manual',
+        riskScore: null,
+        expectedDelay: null,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      let prediction;
+      
+      if (usePINN && pinnSimulator.getConfiguration().pinnAvailable) {
+        // Use the simulator for prediction with PINN
+        prediction = pinnSimulator.simulateRiskPrediction(
+          dependency as any,
+          sourceItem,
+          targetItem
+        );
+        
+        // Return enriched data with physics-based factors
+        res.json({
+          riskScore: prediction.riskScore,
+          expectedDelay: prediction.expectedDelay,
+          productivityImpact: prediction.productivityImpact,
+          explanationFactors: prediction.explanationFactors,
+          comparisonWithTraditional: prediction.comparisonWithTraditional,
+          usedPINN: true
+        });
+      } else {
+        // Fallback to traditional prediction
+        prediction = await riskPredictionService.predictDependencyRisk(
+          dependency,
+          sourceItem,
+          targetItem,
+          []
+        );
+        
+        // Calculate expected delay based on risk score
+        const expectedDelay = riskPredictionService.estimateDelay(
+          prediction,
+          targetItem
+        );
+        
+        res.json({
+          riskScore: prediction,
+          expectedDelay,
+          usedPINN: false
+        });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to predict risk', error: error.message });
     }
   });
 
