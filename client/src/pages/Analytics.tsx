@@ -1,6 +1,6 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { workItemApi } from '@/lib/api';
+import { workItemsApi } from '@/lib/api';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { AlertCircle, BarChart2 } from 'lucide-react';
@@ -10,14 +10,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 const Analytics = () => {
   const { data: workItems, isLoading, error } = useQuery({
     queryKey: ['workItems'],
-    queryFn: workItemApi.getWorkItems
+    queryFn: () => workItemsApi.getAll()
   });
 
   // Process work item status data
   const getWorkItemStatusData = () => {
-    if (!workItems?.length) return [];
+    if (!workItems || workItems.length === 0) return [];
 
-    const statusDistribution = workItems.reduce((acc: Record<string, number>, item: any) => {
+    const statusDistribution = (workItems as any[]).reduce((acc: Record<string, number>, item: any) => {
       const status = item.state || 'Unknown';
       acc[status] = (acc[status] || 0) + 1;
       return acc;

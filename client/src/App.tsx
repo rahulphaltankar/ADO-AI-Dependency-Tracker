@@ -14,6 +14,7 @@ import Settings from "@/pages/Settings";
 import Help from "@/pages/Help";
 import PhysicsSettings from "@/pages/PhysicsSettings";
 import AppLayout from "@/components/layout/AppLayout";
+import { WebSocketProvider } from "@/contexts/WebSocketContext";
 
 function Router() {
   return (
@@ -38,8 +39,10 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <Router />
-      <Toaster />
+      <WebSocketProvider>
+        <Router />
+        <Toaster />
+      </WebSocketProvider>
     </QueryClientProvider>
   );
 }

@@ -1,0 +1,21 @@
+{
+  "deployment": {
+    "run": { "command": "npm run start" },
+    "healthcheck": {
+      "enabled": true,
+      "path": "/",
+      "port": 5000
+    },
+    "env": {
+      "NODE_ENV": "production"
+    },
+    "scaling": {
+      "minInstances": 1,
+      "maxInstances": 3,
+      "scaleUpCpu": 70,
+      "scaleUpDuration": 120,
+      "scaleDownCpu": 30,
+      "scaleDownDuration": 300
+    }
+  }
+}
