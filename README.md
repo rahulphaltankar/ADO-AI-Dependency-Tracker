@@ -160,7 +160,9 @@ Set up your Azure DevOps connection and alert settings in the Settings page of t
 
 ## 📖 License
 
-[MIT License](LICENSE)
+Copyright © 2025 [Rahul Phaltankar](https://github.com/rahulphaltankar).
+
+This project is [MIT](https://github.com/rahulphaltankar/ado-ai-dependency-tracker-new/blob/main/LICENSE) licensed.
 
 ## 🤝 Contributing
 
