@@ -169,5 +169,3 @@ This project is [MIT] (https://github.com/rahulphaltankar/ADO-AI-Dependency-Trac
 Contributions are welcome! Please feel free to submit a Pull Request.
 
 ---
-
-Developed with ❤️ using cutting-edge AI and ML technologies
