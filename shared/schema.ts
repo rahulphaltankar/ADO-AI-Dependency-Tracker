@@ -24,7 +24,11 @@ export const adoSettings = pgTable("ado_settings", {
   userId: integer("user_id").notNull().references(() => users.id),
   organization: text("organization").notNull(),
   project: text("project").notNull(),
-  token: text("token").notNull(),
+  token: text("token"), // Legacy PAT token (optional now)
+  accessToken: text("access_token"), // OAuth access token
+  refreshToken: text("refresh_token"), // OAuth refresh token
+  tokenExpiresAt: timestamp("token_expires_at"), // Expiration timestamp
+  useOAuth: boolean("use_oauth").default(true), // Whether to use OAuth or PAT
 });
 
 export const insertAdoSettingsSchema = createInsertSchema(adoSettings).omit({

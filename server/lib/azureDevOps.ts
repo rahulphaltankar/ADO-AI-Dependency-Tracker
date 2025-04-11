@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { WorkItem, InsertWorkItem } from '@shared/schema';
+import { WorkItem, InsertWorkItem, AdoSettings } from '@shared/schema';
 
 interface AdoWorkItem {
   id: number;
@@ -32,23 +32,76 @@ interface AdoRelation {
 
 export class AzureDevOpsClient {
   private baseUrl: string;
-  private pat: string;
   private organization: string;
   private project: string;
-
-  constructor(organization: string, project: string, token: string) {
+  
+  // Authentication
+  private useOAuth: boolean;
+  private pat?: string;
+  private accessToken?: string;
+  private refreshToken?: string;
+  private tokenExpiresAt?: Date;
+  
+  constructor(organization: string, project: string, authOptions: {
+    useOAuth: boolean;
+    token?: string;
+    accessToken?: string;
+    refreshToken?: string;
+    tokenExpiresAt?: Date;
+  }) {
     this.organization = organization;
     this.project = project;
     this.baseUrl = `https://dev.azure.com/${organization}/${project}/_apis`;
-    this.pat = token;
+    
+    // Auth setup
+    this.useOAuth = authOptions.useOAuth;
+    this.pat = authOptions.token;
+    this.accessToken = authOptions.accessToken;
+    this.refreshToken = authOptions.refreshToken;
+    this.tokenExpiresAt = authOptions.tokenExpiresAt;
+  }
+  
+  // Factory method from ADO settings
+  static fromAdoSettings(settings: AdoSettings): AzureDevOpsClient {
+    return new AzureDevOpsClient(
+      settings.organization,
+      settings.project,
+      {
+        useOAuth: settings.useOAuth ?? false,
+        token: settings.token ?? undefined,
+        accessToken: settings.accessToken ?? undefined,
+        refreshToken: settings.refreshToken ?? undefined,
+        tokenExpiresAt: settings.tokenExpiresAt ?? undefined
+      }
+    );
   }
 
   private getAuthHeader() {
-    const encodedPat = Buffer.from(':' + this.pat).toString('base64');
-    return {
-      'Authorization': `Basic ${encodedPat}`,
-      'Content-Type': 'application/json'
-    };
+    if (this.useOAuth) {
+      if (!this.accessToken) {
+        throw new Error('OAuth access token is required when useOAuth is true');
+      }
+      
+      // Check if token is expired and should be refreshed
+      if (this.tokenExpiresAt && new Date() > this.tokenExpiresAt) {
+        throw new Error('OAuth token expired - token refresh required');
+      }
+      
+      return {
+        'Authorization': `Bearer ${this.accessToken}`,
+        'Content-Type': 'application/json'
+      };
+    } else {
+      // Legacy PAT authentication
+      if (!this.pat) {
+        throw new Error('Personal Access Token is required when useOAuth is false');
+      }
+      const encodedPat = Buffer.from(':' + this.pat).toString('base64');
+      return {
+        'Authorization': `Basic ${encodedPat}`,
+        'Content-Type': 'application/json'
+      };
+    }
   }
 
   // Fetch work items by IDs
@@ -209,7 +262,25 @@ export class AzureDevOpsClient {
   }
 }
 
-// Factory function to create ADO client
-export function createAdoClient(organization: string, project: string, token: string): AzureDevOpsClient {
-  return new AzureDevOpsClient(organization, project, token);
+// Factory functions to create ADO client
+export function createAdoClientWithPAT(organization: string, project: string, token: string): AzureDevOpsClient {
+  return new AzureDevOpsClient(organization, project, {
+    useOAuth: false,
+    token: token
+  });
+}
+
+export function createAdoClientWithOAuth(
+  organization: string, 
+  project: string, 
+  accessToken: string, 
+  refreshToken?: string,
+  expiresAt?: Date
+): AzureDevOpsClient {
+  return new AzureDevOpsClient(organization, project, {
+    useOAuth: true,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+    tokenExpiresAt: expiresAt
+  });
 }
