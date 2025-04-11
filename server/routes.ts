@@ -1,6 +1,8 @@
-import type { Express } from "express";
+import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import { WebSocketServer, WebSocket } from "ws";
+import session from "express-session";
+import passport from "passport";
 import { storage } from "./storage";
 import { z } from "zod";
 import { workItems, dependencies, insertWorkItemSchema, insertDependencySchema, aiAnalysis, insertAiAnalysisSchema } from "@shared/schema";
@@ -21,7 +23,18 @@ interface WSNotifier {
   broadcastCriticalPathUpdate: (criticalPath: number[], totalWeight: number) => void;
   broadcastCascadeImpactUpdate: (workItemId: number, affectedItems: number[], totalDelay: number) => void;
 }
-import { createAdoClient } from "./lib/azureDevOps";
+import { 
+  createAdoClientWithPAT, 
+  createAdoClientWithOAuth, 
+  AzureDevOpsClient 
+} from "./lib/azureDevOps";
+import { 
+  setupAzureOAuth, 
+  initiateAzureAuth, 
+  handleAzureAuthCallback, 
+  requireAuth, 
+  saveAzureDevOpsConnection 
+} from "./lib/azureOAuth";
 import { analyzeDependencyText } from "./lib/openai";
 import { dependencyAnalyzer } from "./lib/dependencyAnalysis";
 import { notificationService } from "./lib/notification";
@@ -30,6 +43,115 @@ import { pythonAPI } from "./lib/pythonAPI";
 import { pinnSimulator } from "./lib/pinnSimulator";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // ------------------ SESSION & AUTH SETUP ------------------
+  
+  // Configure session middleware
+  app.use(session({
+    secret: process.env.SESSION_SECRET || 'development-secret-key',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { 
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+  }));
+  
+  // Initialize Passport
+  app.use(passport.initialize());
+  app.use(passport.session());
+  
+  // Setup Azure OAuth
+  const oauthConfigured = setupAzureOAuth(storage);
+  
+  // ------------------ AUTH ROUTES ------------------
+  
+  // Only set up OAuth routes if OAuth is configured
+  if (oauthConfigured) {
+    console.log('Azure OAuth is configured, setting up auth routes');
+    
+    // Initiate Azure AD OAuth authentication
+    app.get('/api/auth/azure', initiateAzureAuth);
+    
+    // OAuth callback route
+    app.post('/api/auth/azure/callback', handleAzureAuthCallback);
+    
+    // Logout route
+    app.get('/api/auth/logout', (req, res) => {
+      req.logout((err) => {
+        if (err) {
+          console.error('Error during logout:', err);
+          return res.status(500).json({ message: 'Failed to logout' });
+        }
+        res.redirect('/');
+      });
+    });
+    
+    // Get current authenticated user
+    app.get('/api/auth/me', (req, res) => {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ authenticated: false });
+      }
+      
+      res.json({
+        authenticated: true,
+        user: req.user
+      });
+    });
+    
+    // Connect to Azure DevOps after authentication
+    app.post('/api/auth/connect-ado', requireAuth, async (req, res) => {
+      try {
+        const { organization, project } = req.body;
+        
+        if (!organization || !project) {
+          return res.status(400).json({ message: 'Organization and project are required' });
+        }
+        
+        if (!req.user) {
+          return res.status(401).json({ message: 'Not authenticated' });
+        }
+        
+        // Save the settings with OAuth token from authentication
+        const user = req.user as any;
+        
+        const settings = await saveAzureDevOpsConnection(
+          storage,
+          user.id,
+          organization,
+          project,
+          user.accessToken,
+          user.refreshToken || '',
+          user.expiresAt
+        );
+        
+        return res.json({
+          success: true,
+          settings: {
+            organization: settings.organization,
+            project: settings.project,
+            useOAuth: settings.useOAuth
+          }
+        });
+      } catch (error) {
+        console.error('Error connecting to Azure DevOps:', error);
+        return res.status(500).json({ 
+          message: 'Failed to connect to Azure DevOps', 
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    });
+  } else {
+    console.log('Azure OAuth is not configured, providing status endpoints only');
+    
+    // Provide OAuth status endpoint
+    app.get('/api/auth/status', (req, res) => {
+      res.json({
+        oauthConfigured: false,
+        message: 'Azure OAuth is not configured. Set AZURE_CLIENT_ID environment variable to enable OAuth.'
+      });
+    });
+  }
+  
   // ------------------ API ROUTES ------------------
   
   // Get all work items

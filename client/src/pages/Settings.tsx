@@ -1,20 +1,86 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Slider } from '@/components/ui/slider';
 import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
+import { authApi } from '../lib/api';
 
 const Settings = () => {
   const { toast } = useToast();
+  const [oauthStatus, setOauthStatus] = useState<{oauthConfigured: boolean, message?: string} | null>(null);
+  const [authMethod, setAuthMethod] = useState<'oauth' | 'pat'>('pat');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+  const [organization, setOrganization] = useState('contoso');
+  const [project, setProject] = useState('ProjectX');
+  const [pat, setPat] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  // Fetch OAuth configuration status
+  useEffect(() => {
+    const fetchOAuthStatus = async () => {
+      try {
+        const status = await authApi.getOAuthStatus();
+        setOauthStatus(status);
+      } catch (error) {
+        console.error('Failed to fetch OAuth status:', error);
+        setOauthStatus({ oauthConfigured: false, message: 'Failed to check OAuth configuration' });
+      }
+    };
+
+    const checkAuth = async () => {
+      try {
+        const userData = await authApi.getCurrentUser();
+        setIsAuthenticated(userData.authenticated);
+        if (userData.authenticated) {
+          setUserData(userData.user);
+        }
+      } catch (error) {
+        console.error('Failed to check authentication:', error);
+      }
+    };
+
+    fetchOAuthStatus();
+    checkAuth();
+  }, []);
 
   const handleSaveADOSettings = () => {
+    // In a real implementation, this would call the API to save settings
     toast({
       title: "Settings saved",
       description: "Azure DevOps connection settings have been updated.",
     });
+  };
+
+  const handleConnectWithOAuth = async () => {
+    setLoading(true);
+    try {
+      if (isAuthenticated) {
+        // User is already authenticated, connect ADO using OAuth tokens
+        await authApi.connectADO(organization, project);
+        toast({
+          title: "Connection successful",
+          description: "Connected to Azure DevOps using OAuth authentication.",
+        });
+      } else {
+        // Redirect to OAuth flow
+        authApi.initiateOAuth('/settings');
+      }
+    } catch (error) {
+      console.error('OAuth connection error:', error);
+      toast({
+        title: "Connection failed",
+        description: "Failed to connect to Azure DevOps. Please try again.",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSaveAlertSettings = () => {
@@ -45,9 +111,70 @@ const Settings = () => {
             </div>
             <div className="p-5">
               <div className="space-y-4 max-w-2xl">
+                {/* Authentication Method Selection */}
+                <div className="border p-4 rounded-lg">
+                  <h4 className="font-medium mb-3">Authentication Method</h4>
+                  <div className="flex space-x-4">
+                    <div 
+                      className={`p-3 border rounded-lg flex-1 cursor-pointer ${authMethod === 'pat' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}
+                      onClick={() => setAuthMethod('pat')}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">Personal Access Token</span>
+                        {authMethod === 'pat' && <div className="h-3 w-3 rounded-full bg-primary"></div>}
+                      </div>
+                      <p className="text-xs text-neutral-500">
+                        Use a PAT token for direct access to Azure DevOps
+                      </p>
+                    </div>
+                    
+                    <div 
+                      className={`p-3 border rounded-lg flex-1 cursor-pointer ${authMethod === 'oauth' ? 'border-primary bg-primary/5' : 'border-gray-200'} ${!oauthStatus?.oauthConfigured ? 'opacity-50' : ''}`}
+                      onClick={() => oauthStatus?.oauthConfigured && setAuthMethod('oauth')}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-medium">OAuth 2.0</span>
+                        {authMethod === 'oauth' && <div className="h-3 w-3 rounded-full bg-primary"></div>}
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs text-neutral-500">
+                          Securely authenticate using your Azure AD account
+                        </p>
+                        {!oauthStatus?.oauthConfigured && (
+                          <Badge variant="outline" className="ml-2 text-xs">Not Configured</Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* OAuth Status Message */}
+                  {!oauthStatus?.oauthConfigured && (
+                    <Alert className="mt-3 bg-amber-50">
+                      <AlertTitle className="text-sm font-medium text-amber-800">OAuth Not Configured</AlertTitle>
+                      <AlertDescription className="text-xs text-amber-700">
+                        {oauthStatus?.message || "To enable OAuth, the server needs to be configured with Azure AD OAuth credentials. Using Personal Access Token for now."}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {/* User authenticated message */}
+                  {authMethod === 'oauth' && isAuthenticated && (
+                    <Alert className="mt-3 bg-green-50">
+                      <AlertTitle className="text-sm font-medium text-green-800">Authenticated as {userData?.name || 'User'}</AlertTitle>
+                      <AlertDescription className="text-xs text-green-700">
+                        You're signed in using OAuth. You can now connect to Azure DevOps.
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                </div>
+              
                 <div>
                   <label className="text-sm font-medium block mb-1">Organization Name</label>
-                  <Input defaultValue="contoso" placeholder="your-organization-name" />
+                  <Input 
+                    value={organization} 
+                    onChange={(e) => setOrganization(e.target.value)}
+                    placeholder="your-organization-name" 
+                  />
                   <p className="text-xs text-neutral-500 mt-1">
                     The name of your Azure DevOps organization
                   </p>
@@ -55,30 +182,64 @@ const Settings = () => {
 
                 <div>
                   <label className="text-sm font-medium block mb-1">Project Name</label>
-                  <Input defaultValue="ProjectX" placeholder="your-project-name" />
+                  <Input 
+                    value={project} 
+                    onChange={(e) => setProject(e.target.value)}
+                    placeholder="your-project-name" 
+                  />
                   <p className="text-xs text-neutral-500 mt-1">
                     The name of your Azure DevOps project
                   </p>
                 </div>
 
-                <div>
-                  <label className="text-sm font-medium block mb-1">Personal Access Token</label>
-                  <Input type="password" defaultValue="●●●●●●●●●●●●●●●●●●●●" placeholder="your-pat-token" />
-                  <p className="text-xs text-neutral-500 mt-1">
-                    PAT with read access to work items and code
-                  </p>
-                </div>
+                {/* PAT input when PAT method selected */}
+                {authMethod === 'pat' && (
+                  <div>
+                    <label className="text-sm font-medium block mb-1">Personal Access Token</label>
+                    <Input 
+                      type="password"
+                      value={pat}
+                      onChange={(e) => setPat(e.target.value)}
+                      placeholder="your-pat-token" 
+                    />
+                    <p className="text-xs text-neutral-500 mt-1">
+                      PAT with read access to work items and code
+                    </p>
+                  </div>
+                )}
 
                 <div className="flex items-center space-x-2 mt-6">
-                  <Button 
-                    className="bg-primary hover:bg-primary-dark"
-                    onClick={handleSaveADOSettings}
-                  >
-                    Save Settings
-                  </Button>
-                  <Button variant="outline">
-                    Test Connection
-                  </Button>
+                  {authMethod === 'pat' ? (
+                    <>
+                      <Button 
+                        className="bg-primary hover:bg-primary-dark"
+                        onClick={handleSaveADOSettings}
+                        disabled={!organization || !project || !pat}
+                      >
+                        Save Settings
+                      </Button>
+                      <Button variant="outline">
+                        Test Connection
+                      </Button>
+                    </>
+                  ) : (
+                    <Button 
+                      className="bg-primary hover:bg-primary-dark"
+                      onClick={handleConnectWithOAuth}
+                      disabled={!organization || !project || loading}
+                    >
+                      {loading ? (
+                        <div className="flex items-center">
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-white border-opacity-50 border-t-transparent rounded-full"></div>
+                          Connecting...
+                        </div>
+                      ) : (
+                        <>
+                          {isAuthenticated ? 'Connect to Azure DevOps' : 'Sign in with Microsoft'}
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

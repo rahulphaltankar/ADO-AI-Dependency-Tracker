@@ -108,6 +108,42 @@ export const adoApi = {
   }
 };
 
+// Auth API
+export const authApi = {
+  // Get OAuth status and configuration
+  getOAuthStatus: async (): Promise<{oauthConfigured: boolean, message?: string}> => {
+    try {
+      const res = await apiRequest('GET', '/api/auth/status', undefined);
+      return await res.json();
+    } catch (error) {
+      // If endpoint doesn't exist (older versions), assume OAuth is not configured
+      return { oauthConfigured: false, message: 'OAuth endpoint not available' };
+    }
+  },
+  
+  // Get current user info (if authenticated)
+  getCurrentUser: async (): Promise<{authenticated: boolean, user?: any}> => {
+    try {
+      const res = await apiRequest('GET', '/api/auth/me', undefined);
+      return await res.json();
+    } catch (error) {
+      return { authenticated: false };
+    }
+  },
+  
+  // Connect using OAuth
+  initiateOAuth: (redirectTo?: string): void => {
+    const queryString = redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : '';
+    window.location.href = `/api/auth/azure${queryString}`;
+  },
+  
+  // Connect ADO using OAuth tokens
+  connectADO: async (organization: string, project: string): Promise<any> => {
+    const res = await apiRequest('POST', '/api/auth/connect-ado', { organization, project });
+    return await res.json();
+  }
+};
+
 // Settings API
 export const settingsApi = {
   getAdoSettings: async (): Promise<AdoSettings> => {

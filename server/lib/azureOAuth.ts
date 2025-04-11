@@ -16,13 +16,13 @@ interface AzureAdJwtPayload {
 }
 
 // Configure Azure AD OAuth2 strategy
-export function setupAzureOAuth(storage: IStorage): void {
+export function setupAzureOAuth(storage: IStorage): boolean {
   // The CLIENT_ID must be configured in Azure Active Directory
   const clientID = process.env.AZURE_CLIENT_ID;
   
   if (!clientID) {
-    console.error('Missing AZURE_CLIENT_ID environment variable');
-    throw new Error('Azure OAuth is not properly configured');
+    console.warn('Missing AZURE_CLIENT_ID environment variable - OAuth functionality will be disabled');
+    return false;
   }
 
   passport.use(new AzureAdOAuth2Strategy({
@@ -73,6 +73,9 @@ export function setupAzureOAuth(storage: IStorage): void {
   passport.deserializeUser((user: any, done) => {
     done(null, user);
   });
+  
+  // If we reach here, configuration was successful
+  return true;
 }
 
 // Middleware to initiate authentication
