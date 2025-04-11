@@ -374,14 +374,12 @@ const PhysicsSettings = () => {
                         id="julia-mode"
                         checked={config?.useJulia || false}
                         onCheckedChange={() => {
-                          // This is a placeholder - would connect to backend API in production
-                          toast({
-                            title: "Julia Integration",
-                            description: "Julia integration feature coming soon!",
-                            variant: "default"
-                          });
+                          if (config) {
+                            updateConfig.mutate({
+                              useJulia: !config.useJulia
+                            });
+                          }
                         }}
-                        disabled={true}
                       />
                     </div>
                     
@@ -432,13 +430,12 @@ const PhysicsSettings = () => {
                       </p>
                       <Select
                         defaultValue={config?.computationMode || 'selective'}
-                        onValueChange={(value) => {
-                          // This is a placeholder - would connect to backend API in production
-                          toast({
-                            title: "Computation Mode Changed",
-                            description: `Mode set to ${value}`,
-                            variant: "default"
-                          });
+                        onValueChange={(value: 'full' | 'selective' | 'minimal') => {
+                          if (config) {
+                            updateConfig.mutate({
+                              computationMode: value
+                            });
+                          }
                         }}
                       >
                         <SelectTrigger id="computation-mode">
@@ -459,11 +456,25 @@ const PhysicsSettings = () => {
                   className="w-full" 
                   variant="outline"
                   onClick={() => {
-                    toast({
-                      title: "Settings Applied",
-                      description: "Advanced settings have been saved and will be applied on the next model update.",
-                      variant: "default"
-                    });
+                    if (config) {
+                      // Apply all settings at once
+                      updateConfig.mutate({
+                        usePINN: config.pinnEnabled,
+                        lightweightMode: config.lightweightMode,
+                        useJulia: config.useJulia,
+                        implicitDependencyDetection: config.implicitDependencyDetection,
+                        optimizationEngine: config.optimizationEngine,
+                        computationMode: config.computationMode
+                      }, {
+                        onSuccess: () => {
+                          toast({
+                            title: "Settings Applied",
+                            description: "Advanced settings have been saved and will be applied on the next model update.",
+                            variant: "default"
+                          });
+                        }
+                      });
+                    }
                   }}
                 >
                   Apply Advanced Settings
