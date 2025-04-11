@@ -91,15 +91,36 @@ const Help = () => {
                       <AccordionContent>
                         <p className="text-neutral-600">
                           To connect to Azure DevOps, go to the Settings page and select the Azure DevOps tab. 
-                          You'll need to provide:
+                          You have two authentication options:
                         </p>
-                        <ul className="list-disc pl-6 mt-2 space-y-1 text-neutral-600">
+                        
+                        <h5 className="font-medium mt-3 mb-1 text-neutral-700">Option 1: Personal Access Token (PAT)</h5>
+                        <p className="text-neutral-600">
+                          For traditional authentication, you'll need to provide:
+                        </p>
+                        <ul className="list-disc pl-6 mt-1 space-y-1 text-neutral-600">
                           <li>Your organization name (e.g., "contoso")</li>
                           <li>Project name (e.g., "ProjectX")</li>
                           <li>Personal Access Token (PAT) with read access to work items and code</li>
                         </ul>
-                        <p className="mt-2 text-neutral-600">
-                          After saving, you can test the connection and then sync work items from your Azure DevOps project.
+                        
+                        <h5 className="font-medium mt-3 mb-1 text-neutral-700">Option 2: OAuth 2.0 Authentication (Recommended)</h5>
+                        <p className="text-neutral-600">
+                          For a more secure, token-based authentication:
+                        </p>
+                        <ul className="list-disc pl-6 mt-1 space-y-1 text-neutral-600">
+                          <li>Click the "OAuth 2.0" option in the Authentication Method section</li>
+                          <li>Enter your organization name and project name</li>
+                          <li>Click "Sign in with Microsoft" to authenticate with your Azure AD account</li>
+                          <li>Grant the requested permissions when prompted</li>
+                        </ul>
+                        <p className="text-neutral-600 mt-2">
+                          <strong>Note:</strong> OAuth authentication requires server-side configuration by your administrator.
+                          If the OAuth option is disabled, PAT authentication is still available.
+                        </p>
+                        
+                        <p className="mt-3 text-neutral-600">
+                          After connecting, you can test the connection and sync work items from your Azure DevOps project.
                         </p>
                       </AccordionContent>
                     </AccordionItem>
