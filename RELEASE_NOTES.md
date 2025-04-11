@@ -1,6 +1,30 @@
 # ADO-AI Dependency Tracker Release Notes
 
-## Version 2.0.0 (April 11, 2025)
+## Version 2.1.0 (April 11, 2025)
+
+### Azure DevOps OAuth Authentication
+
+We're pleased to announce an important security enhancement to the ADO-AI Dependency Tracker with the addition of OAuth 2.0 authentication for Azure DevOps integration. This update provides a more secure and user-friendly authentication method while maintaining compatibility with existing Personal Access Token (PAT) authentication.
+
+#### Key Enhancements
+
+- **OAuth 2.0 Authentication**: Added secure token-based authentication with Azure AD for Azure DevOps connections
+- **Enhanced Security**: Eliminated the need to store long-lived personal access tokens
+- **Seamless Integration**: Direct sign-in using Microsoft account credentials
+- **Graceful Fallback**: Automatic fallback to PAT authentication when OAuth credentials aren't configured
+- **Updated User Interface**: Redesigned Settings page with authentication method selection
+- **Comprehensive Documentation**: Added OAuth setup instructions to User Guide and README
+
+#### Technical Details
+
+- **Optional Configuration**: OAuth integration requires server-side configuration with Azure AD credentials
+- **Environment Variables**: Added support for AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_CALLBACK_URL
+- **API Endpoint Security**: Enhanced authentication flow and token management
+- **Cross-compatible**: Maintains backward compatibility with existing PAT authentication
+
+---
+
+## Version 2.0.0 (March 28, 2025)
 
 ### Physics-Informed Neural Networks Integration
 
@@ -49,7 +73,35 @@ We are excited to announce a major update to the ADO-AI Dependency Tracker with 
 - Fixed WebSocket reconnection issues
 - Improved error messaging for API failures
 
-### Migration Guide
+### Migration Guide for v2.1.0
+
+#### For Existing Users
+
+1. **OAuth Configuration (Optional)**: 
+   - No changes required if continuing to use PAT authentication
+   - For OAuth: Work with your Azure AD administrator to set up an OAuth application
+   - Configure server environment with Azure AD credentials
+
+2. **Authentication Method**: 
+   - PAT Authentication: Continue using as before
+   - OAuth Authentication: When configured, select OAuth in Settings page
+
+#### For Developers
+
+1. **New Environment Variables (Optional for OAuth)**:
+   - `AZURE_CLIENT_ID`: Azure AD application client ID
+   - `AZURE_CLIENT_SECRET`: Azure AD application client secret 
+   - `AZURE_CALLBACK_URL`: OAuth callback URL (https://your-domain/api/auth/azure/callback)
+
+2. **API Changes**:
+   - New authentication endpoints in /api/auth/*
+   - Status endpoint to check OAuth configuration
+
+3. **Deployment Considerations**:
+   - OAuth requires HTTPS for production use
+   - Session secret must be configured for OAuth token storage
+
+### Migration Guide for v2.0.0
 
 #### For Existing Users
 

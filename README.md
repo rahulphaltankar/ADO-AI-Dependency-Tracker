@@ -95,6 +95,8 @@ The system includes built-in data anonymization and GDPR compliance features:
 
 ### Integration
 - Azure DevOps REST API
+  - Personal Access Token (PAT) authentication
+  - OAuth 2.0 authentication (enhanced security)
 - OpenAI API for advanced NLP tasks
 
 ## 📊 Dashboard & Analytics
@@ -108,10 +110,12 @@ The system provides comprehensive analytics including:
 
 ## 🔒 Security & Compliance
 
+- OAuth 2.0 authentication for enhanced security with Azure DevOps
 - GDPR-compliant data processing
 - Role-based access control
 - Data anonymization options
 - Audit logging for all actions
+- No storage of long-lived personal access tokens (with OAuth)
 
 ## 🔍 Implementation Phases
 
@@ -148,7 +152,19 @@ npm run dev
 ```
 
 ### Configuration
-Set up your Azure DevOps connection and alert settings in the Settings page of the application.
+Set up your Azure DevOps connection and alert settings in the Settings page of the application:
+
+#### Azure DevOps Authentication
+The application supports two authentication methods:
+1. **Personal Access Token (PAT)**: Enter your organization name, project name, and PAT in the Settings page.
+2. **OAuth 2.0 Authentication** (Recommended): Configure the server with Azure AD OAuth credentials for enhanced security:
+   ```
+   # Required for OAuth authentication
+   AZURE_CLIENT_ID=your_client_id
+   AZURE_CLIENT_SECRET=your_client_secret
+   AZURE_CALLBACK_URL=your_callback_url
+   ```
+   If OAuth environment variables are not configured, the system automatically falls back to PAT authentication.
 
 ## 📌 Future Roadmap
 
