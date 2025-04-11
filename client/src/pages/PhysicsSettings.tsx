@@ -35,7 +35,14 @@ const PhysicsSettings = () => {
   
   // Update PINN configuration
   const updateConfig = useMutation({
-    mutationFn: async (newConfig: { usePINN: boolean, lightweightMode: boolean }) => {
+    mutationFn: async (newConfig: { 
+      usePINN?: boolean, 
+      lightweightMode?: boolean,
+      useJulia?: boolean,
+      implicitDependencyDetection?: boolean,
+      optimizationEngine?: boolean,
+      computationMode?: 'full' | 'selective' | 'minimal'
+    }) => {
       try {
         // Use a direct fetch here since we're having issues with the apiRequest function
         const response = await fetch('/api/pinn-config', { 
@@ -389,12 +396,11 @@ const PhysicsSettings = () => {
                         id="implicit-detection"
                         checked={config?.implicitDependencyDetection || false}
                         onCheckedChange={() => {
-                          // This is a placeholder - would connect to backend API in production
-                          toast({
-                            title: "Feature Activated",
-                            description: "Implicit dependency detection has been enabled.",
-                            variant: "default"
-                          });
+                          if (config) {
+                            updateConfig.mutate({
+                              implicitDependencyDetection: !config.implicitDependencyDetection
+                            });
+                          }
                         }}
                       />
                     </div>
@@ -410,12 +416,11 @@ const PhysicsSettings = () => {
                         id="optimization-engine"
                         checked={config?.optimizationEngine || false}
                         onCheckedChange={() => {
-                          // This is a placeholder - would connect to backend API in production
-                          toast({
-                            title: "Feature Activated",
-                            description: "Dependency optimization engine has been enabled.",
-                            variant: "default"
-                          });
+                          if (config) {
+                            updateConfig.mutate({
+                              optimizationEngine: !config.optimizationEngine
+                            });
+                          }
                         }}
                       />
                     </div>

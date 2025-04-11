@@ -461,18 +461,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Update PINN configuration
   app.post('/api/pinn-config', async (req, res) => {
     try {
-      const { usePINN, lightweightMode } = req.body;
+      const { 
+        usePINN, 
+        lightweightMode,
+        useJulia,
+        implicitDependencyDetection,
+        optimizationEngine,
+        computationMode
+      } = req.body;
       
       // Configure both the risk prediction service and the simulator
+      // For backwards compatibility, the risk prediction service only needs the basic options
       riskPredictionService.configure({
         usePINN,
         lightweightMode
       });
       
-      // Update simulator configuration
+      // Update simulator with all the advanced configuration options
       pinnSimulator.configure({
         usePINN,
-        lightweightMode
+        lightweightMode,
+        useJulia,
+        implicitDependencyDetection,
+        optimizationEngine,
+        computationMode
       });
       
       const config = pinnSimulator.getConfiguration();

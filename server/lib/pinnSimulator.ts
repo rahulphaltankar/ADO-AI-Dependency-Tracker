@@ -51,19 +51,38 @@ export class PINNSimulator {
   private simulationEnabled = false;
   private lightweightMode = false;
   private pinnAvailable = false;
+  private useJulia = false;
+  private implicitDependencyDetection = false;
+  private optimizationEngine = false;
+  private computationMode: 'full' | 'selective' | 'minimal' = 'selective';
 
   constructor() {}
 
-  configure(options: { usePINN: boolean; lightweightMode: boolean }) {
-    this.simulationEnabled = options.usePINN;
-    this.lightweightMode = options.lightweightMode;
+  configure(options: { 
+    usePINN?: boolean; 
+    lightweightMode?: boolean;
+    useJulia?: boolean;
+    implicitDependencyDetection?: boolean;
+    optimizationEngine?: boolean;
+    computationMode?: 'full' | 'selective' | 'minimal';
+  }) {
+    if (options.usePINN !== undefined) this.simulationEnabled = options.usePINN;
+    if (options.lightweightMode !== undefined) this.lightweightMode = options.lightweightMode;
+    if (options.useJulia !== undefined) this.useJulia = options.useJulia;
+    if (options.implicitDependencyDetection !== undefined) this.implicitDependencyDetection = options.implicitDependencyDetection;
+    if (options.optimizationEngine !== undefined) this.optimizationEngine = options.optimizationEngine;
+    if (options.computationMode !== undefined) this.computationMode = options.computationMode;
   }
 
   getConfiguration() {
     return {
       pinnEnabled: this.simulationEnabled,
       lightweightMode: this.lightweightMode,
-      pinnAvailable: this.pinnAvailable
+      pinnAvailable: this.pinnAvailable,
+      useJulia: this.useJulia,
+      implicitDependencyDetection: this.implicitDependencyDetection,
+      optimizationEngine: this.optimizationEngine,
+      computationMode: this.computationMode
     };
   }
   
@@ -363,7 +382,11 @@ export class PINNSimulator {
       indirectDependents.push(allNodes[randomIndex]);
     }
     
-    return [...new Set([...directDependents, ...indirectDependents])];
+    // Create a unique array of affected items
+    const uniqueDependents = new Set<number>();
+    directDependents.forEach(id => uniqueDependents.add(id));
+    indirectDependents.forEach(id => uniqueDependents.add(id));
+    return Array.from(uniqueDependents);
   }
   
   private _generateMitigationSuggestions(
